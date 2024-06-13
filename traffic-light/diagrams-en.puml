@@ -1,0 +1,91 @@
+@startuml "Base scenario"
+
+title Base scenario
+
+actor "Operator" as op
+participant "City traffic\ncentral control" as tm
+participant "Traffic light" as tl
+
+group Mode setting
+
+op -> tm++: set new mode
+tm -> tl++: new mode
+
+note over tm
+Possible options
+- green light duration
+(if 0 for all directions - all reds, noone drives)
+- non-regulated mode (blinking yellow)
+end note
+
+tl --> tm--: confirmation
+tm --> op--: confirmation
+
+end
+
+
+group Self diagnostics and status
+tl -> tl: self diagnostics
+tl -> tm: state
+tm -> op: state
+end
+
+group Manual control
+
+op -> tm++: manual state change
+tm -> tl++: manual state change
+tl --> tm--: confirmation
+tm --> op--: confirmation
+
+end
+
+@enduml
+
+
+@startuml "base scenario + hla"
+
+actor "Operator" as op
+participant "City traffic\ncentral control" as tm
+participant "1. Connector" as conn
+participant "2. Control system" as control_tl
+participant "3. LEDs control" as control_leds
+participant "4. Diagnostics" as self_diag
+
+
+group Mode setting
+
+op -> tm++: new mode
+tm -> conn: new mode request
+conn -> control_tl++: new mode request
+control_tl -> control_tl: storing new mode
+control_tl --> conn--: confirmation
+
+conn --> tm: confirmation
+tm --> op--: confirmation
+
+end
+
+
+group Self diagnostics and status
+control_leds -> self_diag: status
+self_diag -> control_tl: status 
+control_tl -> conn: traffic light state
+conn -> tm: traffic light state
+tm -> op: traffic lights state
+end
+
+group Manual control
+
+op -> tm++: manual mode change
+tm -> conn: manual mode change
+conn -> control_tl++: manual mode change
+control_tl -> control_leds++: manual mode change
+control_leds --> control_tl--: confirmation
+control_tl --> conn--: confirmation
+conn --> tm: confirmation
+tm --> op--: confirmation
+
+end
+
+
+@enduml

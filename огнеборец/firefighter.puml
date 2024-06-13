@@ -1,0 +1,165 @@
+@startuml ff-archipelag-water-ff
+
+title Сценарий 1. Тушение водой в заданном районе
+
+autonumber
+
+
+participant Стратег as strat
+participant "Связь" as connectivity
+participant "Центральная\nсистема\nуправления" as blaControl
+participant "Навигация" as positioning 
+participant "Управление\nперемещением" as movement
+participant "Тушение\nводой" as waterFF
+participant "Контроль обстановки" as envChecker
+'participant "Поджигание" as fireFF  
+
+
+strat -> connectivity: тушение водой в районе А
+connectivity-> blaControl: тушение водой в районе А
+blaControl -> positioning++: запрос текущих координат
+positioning --> blaControl--: координаты
+blaControl -> movement++: перемещение в район А
+movement -> movement: расчёт манёвра\nи перемещение
+movement --> blaControl--: перемещение в район А завершено
+blaControl -> waterFF++: тушить
+waterFF -> waterFF: тушение
+blaControl  -> envChecker++: пожар потушен?
+envChecker -> envChecker--: пожар потушен?
+envChecker --> blaControl: пожар потушен
+blaControl -> waterFF--: перестать тушить
+deactivate waterFF
+blaControl --> connectivity: пожар в районе А потушен
+connectivity--> strat: пожар в районе А потушен 
+
+@enduml
+
+
+@startuml ff-archipelag-fire-ff
+
+title Сценарий 2. Запуск встречного пала в заданном районе
+
+autonumber
+
+
+participant Стратег as strat
+participant "Связь" as connectivity
+participant "Центральная\nсистема\nуправления" as blaControl
+participant "Навигация" as positioning 
+participant "Управление\nперемещением" as movement
+'participant "Тушение\nводой" as waterFF
+participant "Контроль обстановки" as envChecker
+participant "Поджигание" as fireFF  
+
+
+strat -> connectivity: пустить встречный пал в районе А
+connectivity-> blaControl: пустить встречный пал в районе А
+blaControl -> positioning++: запрос текущих координат
+positioning --> blaControl--: координаты
+blaControl -> movement++: перемещение в район А
+movement -> movement: расчёт манёвра\nи перемещение
+movement --> blaControl--: перемещение в район А завершено
+blaControl -> fireFF++: поджигай
+fireFF -> fireFF: поджигание
+blaControl  -> envChecker++: пал пущен?
+envChecker -> envChecker--: пал пущен?
+envChecker --> blaControl: пал пущен
+blaControl -> fireFF--: перестать поджигать
+deactivate fireFF
+blaControl --> connectivity: встречный пал в районе А запущен
+connectivity--> strat: встречный пал в районе А запущен
+
+@enduml
+
+
+@startuml ff-archipelag-new-arch-fire-ff
+
+title Сценарий 2* (позитивный). Запуск встречного пала в заданном районе + новая архитектура
+
+autonumber
+
+
+participant Стратег as strat
+participant "Связь" as connectivity
+participant "Контроль аутентичности\nполётного задания" as conAuth
+participant "Контроль активации\nцепей тушения и поджига" as ffModeEnabler
+participant "Центральная\nсистема\nуправления" as blaControl
+participant "Комплексирование" as posComplexing
+participant "Навигация\nGNSS + ИНС" as positioning 
+participant "Управление\nперемещением" as movement
+participant "Контроль обстановки" as envChecker
+participant "Поджигание" as fireFF  
+
+
+strat -> connectivity: пустить встречный пал в районе А
+connectivity -> conAuth: пустить встречный пал в районе А
+conAuth -> conAuth: проверка аутентичности задания
+conAuth -> ffModeEnabler: пустить встречный пал в районе А
+conAuth-> blaControl: пустить встречный пал в районе А
+posComplexing -> positioning: запрос текущих координат
+positioning -> posComplexing++: координаты
+posComplexing -> posComplexing: контроль целостности
+blaControl -> posComplexing: запрос текущих координат
+posComplexing --> blaControl--: координаты
+blaControl -> movement++: перемещение в район А
+movement -> movement: расчёт манёвра\nи перемещение
+movement --> blaControl--: перемещение в район А завершено
+blaControl -> fireFF++: поджигай
+fireFF -> ffModeEnabler++: запрос поджигания
+posComplexing -> positioning: запрос текущих координат
+positioning -> posComplexing++: координаты
+ffModeEnabler -> posComplexing: запрос текущих координат и времени
+posComplexing --> ffModeEnabler--: координаты и время
+ffModeEnabler -> ffModeEnabler: проверка разрешённого режима и района
+ffModeEnabler -> fireFF: цепи поджигания активированы
+fireFF -> fireFF: поджигание
+ffModeEnabler -> ffModeEnabler: контроль положения
+blaControl  -> envChecker++: пал пущен?
+envChecker -> envChecker--: пал пущен?
+envChecker --> blaControl: пал пущен
+blaControl -> fireFF--: перестать поджигать
+fireFF -> ffModeEnabler: перестал поджигать
+deactivate fireFF
+ffModeEnabler -> ffModeEnabler: отключить цепи поджига
+deactivate ffModeEnabler
+blaControl --> connectivity: встречный пал в районе А запущен
+connectivity--> strat: встречный пал в районе А запущен
+
+@enduml
+
+
+@startuml ff-archipelag-water-ff-demo
+
+title Сценарий 1. Тушение водой в заданном районе
+
+autonumber
+
+
+participant Стратег as strat
+participant "Связь" as connectivity
+participant "Центральная\nсистема\nуправления" as blaControl
+participant "Навигация" as positioning 
+participant "Управление\nперемещением" as movement
+participant "Тушение\nводой" as waterFF
+participant "Контроль обстановки" as envChecker
+'participant "Поджигание" as fireFF  
+
+
+strat -> connectivity: тушение водой в районе А
+connectivity-> blaControl: тушение водой в районе А
+blaControl -> positioning++: запрос текущих координат
+positioning --> blaControl--: координаты
+blaControl -> movement++: перемещение в район А
+movement -> movement: расчёт манёвра\nи перемещение
+movement --> blaControl--: перемещение в район А завершено
+blaControl -> waterFF++: тушить
+waterFF -> waterFF: тушение
+blaControl  -> envChecker++: пожар потушен?
+envChecker -> envChecker--: пожар потушен?
+envChecker --> blaControl: пожар потушен
+blaControl -> waterFF--: перестать тушить
+deactivate waterFF
+blaControl --> connectivity: пожар в районе А потушен
+connectivity--> strat: пожар в районе А потушен 
+
+@enduml

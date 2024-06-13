@@ -1,0 +1,79 @@
+@startuml "Базовый сценарий"
+
+title "Базовый сценарий"
+
+autonumber
+
+actor "Получатель" as client
+participant "Мобильное\nприложение" as mobapp
+participant "ИТ системы\nотправителя" as delivery
+participant "Дрон\nдоставщик" as drone
+
+delivery -> mobapp: информация о доставке
+delivery -> drone++: задание на доставку
+note over drone 
+груз закрепляется 
+сотрудниками склада
+end note
+drone -> drone: перемещение груза
+drone --> delivery: готов к выдаче заказа
+delivery -> mobapp++: запрос аутентификации получателя
+mobapp -> client: запрос аутентификации
+client --> mobapp: данные для аутентификации
+mobapp --> delivery: данные для аутентификации
+delivery -> delivery: аутентификация и\nавторизация получателя
+delivery -> drone: кода получения товара
+delivery -> mobapp: (QR) код получения товара
+mobapp -> drone--: (QR) код получения товара
+drone -> drone: проверка кода получения
+drone -> client: выдача груза
+drone -> drone: возвращение на базу
+drone -> delivery--: вернулся на базу
+
+@enduml
+
+@startuml "Базовый сценарий в деталях"
+
+title "Базовый сценарий в деталях"
+
+autonumber
+
+actor "Получатель" as client
+participant "1. Мобильное\nприложение" as mobapp
+participant "2. ИТ системы\nотправителя" as delivery
+participant "4. Обработчик\nпоступающих\nзаказов" as comm
+participant "3. Управления\nзамком\nзахвата" as locker
+participant "5. Оркестратор" as central
+participant "6. Камера\n+анализ потока" as camera
+participant "7. Управление\nеремещением" as flight
+participant "8. GPS приёмник" as gps_nav
+participant "9. Управление\nприводами" as servos
+
+delivery -> mobapp: информация о доставке
+delivery -> comm++: задание на доставку
+comm -> central: задание на доставку
+note over locker
+груз закрепляется
+сотрудниками склада
+end note
+locker -> central: замок закрыт
+central <- gps_nav: положение
+central -> flight++: переместиться в заданный район
+flight -> flight: перемещение груза
+flight --> central--: перемещение завершено
+central -> comm: готов к выдаче заказа
+delivery -> mobapp++: запрос аутентификации получателя
+mobapp -> client: запрос аутентификации
+client --> mobapp: данные для аутентификации
+mobapp --> delivery: данные для аутентификации
+delivery -> delivery: аутентификация и\nавторизация получателя
+delivery -> comm: кода получения товара
+comm -> central: кода получения товара
+delivery -> mobapp: (QR) код получения товара
+mobapp -> camera: (QR) код получения товара
+camera -> central: кодпроверка кода получения
+drone -> client: выдача груза
+drone -> drone: возвращение на базу
+drone -> delivery--: вернулся на базу
+
+@enduml

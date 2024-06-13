@@ -1,0 +1,189 @@
+@startuml "Базовый сценарий"
+
+title "Базовый сценарий.\nПримечание: страж-птицы уже готовы к полётам"
+
+actor "Оператор" as admin
+participant "Система планирования\nполётов" as plansys
+participant "Система организации\nвоздушного движения" as gov
+participant "Страж-птица" as drone
+actor "Правонарушитель" as offender
+autonumber
+
+admin -> plansys: Новое задание на мониторинг\nВыбор дрона
+plansys -> gov: Регистрация полётного задания
+gov --> plansys: Одобрение полёта
+plansys -> drone++: Полётное задание
+drone -> gov: Регистрация 
+gov --> drone: Подтверждение вылета
+group Выполнение задания
+drone -> drone: анализ\nобстановки
+drone -> plansys: Телеметрия
+drone -> gov: Информация о местоположении
+plansys -> admin: положение \nи статус страж-птиц
+group Обнаружение правонарушения
+drone -> offender: воздействие\nшокером
+end 
+end
+drone --> plansys--: Задание выполнено
+plansys -> gov: Полёт завершён
+plansys --> admin: Задание выполнено
+
+@enduml
+
+@startuml "Выполнение задания c HLA"
+
+title "Выполнение задания + HLA"
+
+autonumber
+participant "Система\nпланирования" as dispatcher
+participant "ОрВД" as gov
+participant "1. Связь" as conn
+participant "3. Центральная\nсистема\nуправления" as controlsys
+participant "4. Навигация" as nav
+participant "8. Приводы" as servos 
+participant "6. Полётный\nконтроллер" as autopilot
+participant "2. Сбор и анализ\nданных" as processing
+participant "5. Нейтрализация" as shoker
+participant "7. Самодиагностика\nи мониторинг" as selfdiag
+participant "9. Контроль батареи" as battery
+
+group Инициация вылета
+dispatcher -> conn: полётное задание
+conn -> gov++: регистрация вылета
+note over gov, conn
+регистрация включает в себя 
+- идентификатор и основные параметры дрона
+- идентификатор полётного задания, авторизованного ОрВД
+end note
+gov -> gov: проверка и\nрегистрация\nвылета конкретного\nдрона
+gov --> conn--: разрешение на вылет
+conn -> controlsys++: полётное задание\nразрешение на вылет
+controlsys <- nav: текущие координаты
+selfdiag <- battery: статус
+controlsys <- selfdiag: состояние подсистем
+controlsys -> controlsys: расчёт маршрута
+end
+loop Следование в район мониторинга
+controlsys -> autopilot++: параметры\nперемещения
+autopilot -> autopilot: расчёт управляющих команд
+autopilot -> servos++: управляющие команды
+servos -> servos: выполнение команд
+autopilot --> controlsys: результат\nвыполнения
+controlsys <- nav: координаты
+controlsys -> controlsys: проверка\nдостижения\nзаданного\nрайона
+end
+controlsys -> processing++: включение режима мониторинга
+loop Работа в районе мониторинга
+processing -> processing: сбор и\nанализ данных
+processing --> controlsys: результаты мониторинга
+group Обнаружено правонарушение
+controlsys -> shoker++: произвести воздействие
+shoker --> controlsys--: успешно
+end
+controlsys <- nav: координаты
+controlsys -> conn: телеметрия\n- координаты\n- диагностика\n- события мониторинга
+conn -> dispatcher: телеметрия\nи результаты мониторинга
+conn -> gov: координаты
+note over gov 
+возможен запрет продолжения полёта
+и требование немедленной посадки
+end note
+controlsys -> controlsys: проверка\nусловий завершения\nмиссии
+end
+controlsys -> processing: прекращение мониторинга
+deactivate processing
+group Завершение миссии,\nвозвращение на базу
+controlsys -> autopilot++: параметры перемещения
+autopilot -> autopilot: расчёт управляющих команд
+autopilot -> servos++: управляющие команды
+servos -> servos: выполнение команд
+autopilot --> controlsys: результат выполнения
+controlsys <- nav: координаты
+end
+group Финализация миссии 
+controlsys -> conn--: миссия завершена
+conn -> gov: миссия завершена
+conn -> dispatcher: миссия завершена
+end
+
+@enduml
+
+
+@startuml "Негативный сценарий. 1. Связь"
+
+title "Негативный сценарий. 1. Связь\nНарушение ЦБ№1,2,6"
+
+autonumber
+participant "Система\nпланирования" as dispatcher
+participant "ОрВД" as gov
+participant "1. Связь" as conn #red
+participant "3. Центральная\nсистема\nуправления" as controlsys
+participant "4. Навигация" as nav
+participant "8. Приводы" as servos 
+participant "6. Полётный\nконтроллер" as autopilot
+participant "2. Сбор и анализ\nданных" as processing
+participant "5. Нейтрализация" as shoker
+participant "7. Самодиагностика\nи мониторинг" as selfdiag
+participant "9. Контроль батареи" as battery
+
+group Инициация вылета
+dispatcher -> conn: полётное задание
+conn -> gov++: регистрация вылета
+note over gov, conn
+регистрация включает в себя 
+- идентификатор и основные параметры дрона
+- идентификатор полётного задания, авторизованного ОрВД
+end note
+gov -> gov: проверка и\nрегистрация\nвылета конкретного\nдрона
+gov --> conn--: разрешение на вылет
+conn -[#red]> controlsys++: полётное задание\nразрешение на вылет
+controlsys <- nav: текущие координаты
+selfdiag <- battery: статус
+controlsys <- selfdiag: состояние подсистем
+controlsys -> controlsys: расчёт маршрута
+end
+loop #red Следование в район мониторинга 
+controlsys -> autopilot++: параметры\nперемещения
+autopilot -> autopilot: расчёт управляющих команд
+autopilot -> servos++: управляющие команды
+servos -> servos: выполнение команд
+autopilot --> controlsys: результат\nвыполнения
+controlsys <- nav: координаты
+controlsys -> controlsys: проверка\nдостижения\nзаданного\nрайона
+end
+controlsys -> processing++: включение режима мониторинга
+loop #red Работа в районе мониторинга
+processing -> processing: сбор и\nанализ данных
+processing --> controlsys: результаты мониторинга
+group Обнаружено правонарушение
+controlsys -> shoker++: произвести воздействие
+shoker --> controlsys--: успешно
+end
+controlsys <- nav: координаты
+controlsys -> conn: телеметрия\n- координаты\n- диагностика\n- события мониторинга
+conn -> dispatcher: телеметрия\nи результаты мониторинга
+conn -> gov: координаты
+note over gov 
+возможен запрет продолжения полёта
+и требование немедленной посадки
+end note
+controlsys -> controlsys: проверка\nусловий завершения\nмиссии
+end
+controlsys -> processing: прекращение мониторинга
+deactivate processing
+group Завершение миссии,\nвозвращение на базу
+controlsys -> autopilot++: параметры перемещения
+autopilot -> autopilot: расчёт управляющих команд
+autopilot -> servos++: управляющие команды
+servos -> servos: выполнение команд
+autopilot --> controlsys: результат выполнения
+controlsys <- nav: координаты
+end
+group Финализация миссии 
+controlsys -> conn--: миссия завершена
+conn -> gov: миссия завершена
+conn -> dispatcher: миссия завершена
+end
+
+
+@enduml

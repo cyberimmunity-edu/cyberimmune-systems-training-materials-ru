@@ -1,0 +1,134 @@
+@startuml "Базовый сценарий"
+
+title "Базовый сценарий"
+
+actor "Покупатель" as client
+actor "Оператор" as seller
+participant "POS\nтерминал" as term
+participant "Процессинговый\nцентр" as proc
+
+autonumber
+
+seller -> term++: сумма покупки
+term -> client: запрос авторизации покупки
+client --> term: авторизация
+term -> proc++: запрос списания
+proc -> proc: проверка операции
+proc --> term--: одобрение 
+term --> seller--: одобрение транзакции\nквитанция
+
+@enduml
+
+@startuml "Базовый сценарий + HLA"
+
+title "Базовый сценарий: оплата по NFC + HLA"
+
+autonumber
+
+actor "Покупатель" as client
+actor "Оператор" as seller
+participant "2. Клавиатура" as kb
+participant "3. Центральная\nсистема\nуправления" as controlsys
+participant "4. Экран" as screen
+participant "1. Связь" as conn
+'participant "6. Контроль\nАКБ" as battery
+participant "7. NFC чип" as nfc
+participant "5. Принтер" as printer
+'participant "8. Карт-ридер" as card_reader
+participant "Процессинговый\nцентр" as proc
+
+note over controlsys
+терминал уже включён и готов к работе
+end note
+
+group Инициация транзакции
+seller -> kb: ввод информации
+kb -> controlsys++: новая транзакция
+note over controlsys
+новая транзакция включает в себя
+- идентификатор заказа
+- сумму платежа
+end note
+controlsys -> screen: старт авторизации транзакции
+screen -> seller: старт авторизации транзакции
+seller -> client: старт авторизации 
+end 
+group Авторизация транзакции
+client -> nfc++: карта/гаджет
+nfc -> controlsys--: id клиента
+controlsys -> conn++: запрос авторизации транзакции
+conn -> proc++: запрос авторизации транзакции
+proc -> proc: контроль транзакции
+proc --> conn--: транзакция авторизована
+conn --> controlsys--: транзакция авторизована
+controlsys -> screen--: транзакция авторизована
+screen -> seller:  транзакция авторизована
+end
+group Финализация транзакции
+seller -> kb: печать квитанции
+kb -> controlsys: печать квитанции
+controlsys -> printer--: печать квитанции
+activate printer
+printer -> client--: квитанция
+end
+@enduml
+
+
+@startuml "Негативный сценарий. 1. Связь"
+
+title "Негативный сценарий. 1. Связь\nНарушение ЦБ№1"
+
+autonumber
+
+actor "Покупатель" as client
+actor "Оператор" as seller
+participant "2. Клавиатура" as kb
+participant "3. Центральная\nсистема\nуправления" as controlsys
+participant "4. Экран" as screen
+participant "1. Связь" as conn #red
+'participant "6. Контроль\nАКБ" as battery
+participant "7. NFC чип" as nfc
+participant "5. Принтер" as printer
+'participant "8. Карт-ридер" as card_reader
+participant "Процессинговый\nцентр" as proc
+
+note over controlsys
+терминал уже включён и готов к работе
+end note
+
+group Инициация транзакции
+seller -> kb: ввод информации
+kb -> controlsys++: новая транзакция
+note over controlsys
+новая транзакция включает в себя
+- идентификатор заказа
+- сумму платежа
+end note
+controlsys -> screen: старт авторизации транзакции
+screen -> seller: старт авторизации транзакции
+seller -> client: старт авторизации 
+end 
+group Авторизация транзакции
+client -> nfc++: карта/гаджет
+nfc -> controlsys--: id клиента
+controlsys -> conn++: запрос авторизации транзакции
+note over conn 
+подмена данных транзакции
+end note
+conn -[#red]> proc++: запрос авторизации транзакции
+proc -[#red]> proc: контроль транзакции
+proc --[#red]> conn--: транзакция авторизована
+conn --[#red]> controlsys--: транзакция авторизована
+controlsys -[#red]> screen--: транзакция авторизована
+screen -[#red]> seller:  транзакция авторизована
+end
+group #red Финализация транзакции 
+seller -> kb: печать квитанции
+kb -> controlsys: печать квитанции
+controlsys -> printer--: печать квитанции
+activate printer
+printer -> client--: квитанция
+end
+
+
+@enduml

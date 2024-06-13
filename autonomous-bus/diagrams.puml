@@ -1,0 +1,235 @@
+@startuml "Базовый сценарий перевозки"
+
+title "Базовый сценарий перевозки"
+
+autonumber
+
+actor "Пассажир" as passenger
+participant "Система управления\nрасчётным счётом\nпассажира" as account
+participant "Автобус" as bus
+participant "Система управления\nпарком автобусов\nи планирования\nперевозок" as central 
+participant "Система распознавания\nбиометрии\nи оплаты проезда" as payments
+
+passenger -> account++: первичное пополнение счёта
+account -> account--: зачисление средств\nна счёт пассажира
+note over account 
+пассажир может 
+оплачивать проезд
+end note
+note over bus 
+Специалист подготовил
+автобус, можно ехать
+end note
+note over payments 
+Биометрия пассажиров уже доступна системе.
+Например, через предварительную регистрацию 
+онлайн или через соц. сети.
+end note 
+bus -> central: готов к поездке
+central -> bus++: маршрут
+passenger -> bus: вход в автобус
+bus -> bus: 3D сканирование лица\nпассажира
+bus -> payments++: скан лица\nпассажира
+payments -> payments: идентификация пассажира
+payments -> account++: запрос оплаты проезда\nдля идентифицированного\nпассажира
+account -> account: списание стоимости поездки
+account -> payments--: поездка оплачена
+payments -> bus--: поездка оплачена
+bus -> passenger: поездка оплачена
+bus -> bus: перевозка по маршруту
+passenger -> passenger: выход на нужной остановке
+
+@enduml
+
+@startuml "Базовый сценарий и HLA"
+
+title "Взаимодействие подсистем автобуса в базовом сценарии"
+
+autonumber
+actor "Пассажир" as passenger
+participant "Система\nуправления парком" as dispatcher
+participant "1. Связь" as conn
+participant "4. Самодиагностика" as diag
+participant "3. Центральная\nсистема\nуправления" as central
+participant "2. Сканер\nбиометрии" as scan
+participant "5. Контроль\nдорожной обстановки" as road
+participant "8. Навигация" as nav
+participant "6. Управление\nперемещением" as transfer
+participant "10. Приводы" as servos
+participant "7. Информирование\nпассажиров" as infotainment
+participant "Система\nраспознавания\nи оплаты" as payments
+'participant "9. Кондиционирование" as conditioning
+
+group подготовка к поездке
+diag -> central: готов к поездке
+central -> conn: готов к поездке
+conn -> dispatcher: готов к поездке
+dispatcher -> conn: маршрут
+conn -> central++: маршрут
+central <- nav: координаты
+central <- road: обстановка
+central -> central: расчёт перемещения
+central -> transfer++: детальные параметры перемещения до ближайшей остановки
+end group
+group перемещение до остановки
+nav -> transfer: координаты
+road -> transfer: обстановка
+transfer -> servos: управление 
+transfer -> transfer: перемещение\nдо ближайшей\nостановки
+transfer --> central--: прибыли к остановке
+end group
+group посадка-высадка пассажиров
+central -> servos: открыть двери
+servos --> central: двери открыты
+passenger -> scan++: посмотреть в камеру
+scan -> scan: сканирование\nлица пассажира
+scan -> central--: биометрия
+central -> conn: биометрия и стоимость проезда
+conn -> payments++: биометрия и стоимость проезда
+payments -> payments: идентификация\nпассажира\nи оплата проезда
+payments --> conn--: проезд оплачен
+conn --> central: проезд оплачен
+central -> infotainment: проезд оплачен
+infotainment -> passenger: проезд оплачен
+central -> servos: закрыть двери
+servos --> central--: двери закрыты
+end group
+note over central  
+Продолжение движения по маршруту с остановками
+end note
+group завершение поездки
+central <- nav: координаты
+central -> conn--: маршрут завершён
+conn -> dispatcher: маршрут завершён
+end group
+
+@enduml
+
+
+@startuml "Оплата поездки"
+
+title "Взаимодействие подсистем при оплате поездки"
+
+autonumber
+actor "Пассажир" as passenger
+'participant "Система\nуправления парком" as dispatcher
+participant "1. Связь" as conn
+'participant "4. Самодиагностика" as diag
+participant "3. Центральная\nсистема\nуправления" as central
+participant "2. Сканер\nбиометрии" as scan
+'participant "5. Контроль\nдорожной обстановки" as road
+'participant "8. Навигация" as nav
+'participant "6. Управление\nперемещением" as transfer
+'participant "10. Приводы" as servos
+participant "7. Информирование\nпассажиров" as infotainment
+participant "Система\nраспознавания\nи оплаты" as payments
+'participant "9. Кондиционирование" as conditioning
+
+' group подготовка к поездке
+' diag -> central: готов к поездке
+' central -> conn: готов к поездке
+' conn -> dispatcher: готов к поездке
+' dispatcher -> conn: маршрут
+' conn -> central++: маршрут
+' central <- nav: координаты
+' central <- road: обстановка
+' central -> central: расчёт перемещения
+' central -> transfer++: детальные параметры перемещения до ближайшей остановки
+' end group
+' group перемещение до остановки
+' nav -> transfer: координаты
+' road -> transfer: обстановка
+' transfer -> servos: управление 
+' transfer -> transfer: перемещение\nдо ближайшей\nостановки
+' transfer --> central--: прибыли к остановке
+' end group
+' group посадка-высадка пассажиров
+' central -> servos: открыть двери
+' servos --> central: двери открыты
+passenger -> scan++: посмотреть в камеру
+scan -> scan: сканирование\nлица пассажира
+scan -> central--: биометрия
+central -> conn: биометрия и стоимость проезда
+conn -> payments++: биометрия и стоимость проезда
+payments -> payments: идентификация\nпассажира\nи оплата проезда
+payments --> conn--: проезд оплачен
+conn --> central: проезд оплачен
+central -> infotainment: проезд оплачен
+infotainment -> passenger: проезд оплачен
+' central -> servos: закрыть двери
+' servos --> central--: двери закрыты
+' end group
+' note over central  
+' Продолжение движения по маршруту с остановками
+' end note
+' group завершение поездки
+' central <- nav: координаты
+' central -> conn--: маршрут завершён
+' conn -> dispatcher: маршрут завершён
+' end group
+
+@enduml
+
+@startuml "Оплата поездки. НС 1.Связь"
+
+title "Негативный сценарий 1. Связь. Нарушение ЦБ 1-3"
+
+autonumber
+actor "Пассажир" as passenger
+participant "Система\nуправления парком" as dispatcher
+participant "1. Связь" as conn #red
+participant "4. Самодиагностика" as diag
+participant "3. Центральная\nсистема\nуправления" as central
+participant "2. Сканер\nбиометрии" as scan
+participant "5. Контроль\nдорожной обстановки" as road
+participant "8. Навигация" as nav
+participant "6. Управление\nперемещением" as transfer
+participant "10. Приводы" as servos
+participant "7. Информирование\nпассажиров" as infotainment
+participant "Система\nраспознавания\nи оплаты" as payments
+'participant "9. Кондиционирование" as conditioning
+
+group подготовка к поездке
+diag -> central: готов к поездке
+central -> conn: готов к поездке
+conn -> dispatcher: готов к поездке
+dispatcher -> conn: маршрут
+conn -[#red]> central++: маршрут
+central <- nav: координаты
+central <- road: обстановка
+central -[#red]> central: расчёт перемещения
+central -> transfer++: детальные параметры перемещения до ближайшей остановки
+end group
+group #red перемещение до остановки 
+nav -> transfer: координаты
+road -> transfer: обстановка
+transfer -> servos: управление 
+transfer -> transfer: перемещение\nдо ближайшей\nостановки
+transfer --> central--: прибыли к остановке
+end group
+group посадка-высадка пассажиров
+central -> servos: открыть двери
+servos --> central: двери открыты
+passenger -> scan++: посмотреть в камеру
+scan -> scan: сканирование\nлица пассажира
+scan -> central--: биометрия
+central -> conn: биометрия и стоимость проезда
+conn -> payments++: биометрия и стоимость проезда
+payments -> payments: идентификация\nпассажира\nи оплата проезда
+payments --> conn--: проезд оплачен
+conn --> central: проезд оплачен
+central -> infotainment: проезд оплачен
+infotainment -> passenger: проезд оплачен
+central -> servos: закрыть двери
+servos --> central--: двери закрыты
+end group
+note over central #red 
+Продолжение движения по маршруту с остановками
+end note
+group завершение поездки
+central <- nav: координаты
+central -> conn--: маршрут завершён
+conn -> dispatcher: маршрут завершён
+end group
+
+@enduml

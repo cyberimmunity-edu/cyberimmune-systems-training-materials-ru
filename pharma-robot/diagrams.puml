@@ -1,0 +1,13 @@
+@startuml "usecases"
+
+title "Сценарий 1. Получение лекарства общего назначения"
+
+actor "Клиент" as client
+participant "Клиника" as clinic
+participant "Аптека" as pharmacy
+participant "База данных рецептов" as database
+participant "Робот-фармацевт" as robot
+
+clinic -> client: рецепт или идентификатор лекарства
+
+@enduml
